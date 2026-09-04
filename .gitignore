@@ -1,0 +1,28 @@
+# Local Python environments
+.venv/
+.venv-1/
+__pycache__/
+*.py[cod]
+
+# Competition data and downloaded model weights
+2026-低空图像语义分割赛道-训练集/
+Examples/
+models/
+
+# Training outputs and local reports
+runs/
+outputs/official_train_dataset_report.json
+outputs/sample_dataset_report.json
+outputs/splits/*.csv
+outputs/splits/split_report.json
+outputs/results/*/best_model/
+outputs/results/*/*.pt
+outputs/results/*/*.bin
+outputs/results/*/*.h5
+outputs/results/*/*.log
+
+# Local editor and OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
