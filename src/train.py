@@ -42,6 +42,9 @@ class Tee:
     def __init__(self, *streams: TextIO) -> None:
         self.streams = streams
 
+    def isatty(self) -> bool:
+        return any(stream.isatty() for stream in self.streams)
+
     def write(self, text: str) -> int:
         for stream in self.streams:
             stream.write(text)
@@ -98,9 +101,10 @@ class SegmentationDataset(Dataset):
 def compute_miou(logits: torch.Tensor, targets: torch.Tensor) -> tuple[float, list[float | None]]:
     predictions = logits.argmax(dim=1)
     ious: list[float | None] = [None] * NUM_CLASSES
+    valid = targets != IGNORE_INDEX
     for class_id in range(1, NUM_CLASSES):
-        predicted = predictions == class_id
-        actual = targets == class_id
+        predicted = (predictions == class_id) & valid
+        actual = (targets == class_id) & valid
         union = (predicted | actual).sum().item()
         intersection = (predicted & actual).sum().item()
         ious[class_id] = intersection / union if union else None
@@ -117,9 +121,10 @@ def evaluate(model: torch.nn.Module, loader: DataLoader, device: torch.device) -
             outputs = model(pixel_values=images.to(device)).logits
             outputs = torch.nn.functional.interpolate(outputs, size=masks.shape[-2:], mode="bilinear", align_corners=False)
             predictions = outputs.argmax(dim=1).cpu()
+            valid = masks != IGNORE_INDEX
             for class_id in range(1, NUM_CLASSES):
-                predicted = predictions == class_id
-                actual = masks == class_id
+                predicted = (predictions == class_id) & valid
+                actual = (masks == class_id) & valid
                 total_intersection[class_id] += int((predicted & actual).sum())
                 total_union[class_id] += int((predicted | actual).sum())
     ious = [None] + [total_intersection[i] / total_union[i] if total_union[i] else None for i in range(1, NUM_CLASSES)]

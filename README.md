@@ -8,7 +8,8 @@
 - 已生成固定划分：训练集 5597 张，验证集 1399 张，随机种子为 `2026`。
 - SegFormer MIT-B0 基线已在 AutoDL RTX 5090 上完成 30 epoch 训练。
 - 训练脚本已支持逐 epoch 持久化：即使训练中断，也能从 `history.jsonl` 和 `history.json` 恢复已完成记录。
-- 首轮最佳验证集 mIoU 为 `0.74514`（epoch 25），完整分析见 `docs/analysis/exp001_baseline.md`。
+- 首轮 epoch 25 的正式验证集 mIoU 为 `0.74939`。该结果已使用修复后的 Ignore 掩码重新评价，完整分析见 `docs/analysis/exp001/exp001_baseline.md`。
+- exp002 已完成：输入尺寸提升到 `768 x 768` 后，验证集 mIoU 为 `0.76258`，当前为最佳实验，分析见 `docs/analysis/exp002_size768.md`。
 
 ## 类别和评价
 
@@ -35,9 +36,10 @@ src/                 可运行代码
   smoke_test.py      检查环境、CUDA、Tensor 和基础训练链路
   train.py           SegFormer 训练、验证和实验记录
 outputs/results/     各实验的原始结果，例如 history.json
+outputs/audits/      数据划分和数据质量审计报告
 outputs/splits/      固定划分文件（本地或云端生成）
-docs/analysis/       基于真实结果的分析记录
-docs/suggestions/    下一步实验建议和决策依据
+docs/analysis/expXXX/       按实验编号保存真实结果分析
+docs/suggestions/expXXX/    按实验编号保存团队建议和决策依据
 ```
 
 队友使用 AI 时，先让 AI 阅读 `README.md`、`src/`、`outputs/results/`、`docs/analysis/` 和 `docs/suggestions/`，再提出分析或改代码。这样代码、事实结果和主观建议彼此分开，避免 AI 把建议误当成实验事实。
@@ -110,9 +112,13 @@ cat /root/autodl-tmp/runs/exp002_baseline_logged/summary.json
 
 ## 首轮结果分析
 
-首轮 30 epoch 的最佳验证集 mIoU 为 `0.74514`（epoch 25），第 30 轮为 `0.74312`。第 25～30 轮已经进入平台期，因此后续推理应使用最佳 checkpoint，而不是盲目使用最后一轮。`ious` 数组索引始终对应类别 ID，索引 0 为 `null`，不能把它纳入平均值。
+首轮 30 epoch 的旧评价口径最佳验证集 mIoU 为 `0.74514`（epoch 25），第 30 轮为 `0.74312`；使用修复后的评价代码重评 epoch 25 后，正式验证集 mIoU 为 `0.74939`。完整重评结果保存在 `outputs/results/exp001_baseline/exp001_fix_metrics.json`。
 
-首轮最低的有效类别是 `Barren`（最佳 IoU `0.53340`），其次是 `Background`（`0.66254`）和 `Vehicle`（`0.71723`）。完整的每类数据和判断记录在 `docs/analysis/exp001_baseline.md`。
+正式口径下最低的有效类别是 `Barren`（`0.53582`），其次是 `Vehicle`（`0.71723`）和 `Background`（`0.68018`）。完整记录见 `docs/analysis/exp001/exp001_baseline.md`，团队建议见 `docs/suggestions/exp001/exp001_team_suggestions.md`。
+
+当前最佳实验为 exp002：768 输入下验证集 mIoU `0.76258`，比 exp001 正式基线提升 `0.01320`。实验记录见 `docs/analysis/exp002_size768.md`，结果文件见 `outputs/results/exp002_size768/`。
+
+固定划分基础审计已完成：train/validation 无重复 ID，跨集合无完全相同图片，数据文件和尺寸检查通过。唯一重复 mask 对应不同图片，不阻塞下一轮实验；详细报告见 `outputs/audits/split_audit_report.json`。
 
 如果需要从 AutoDL 重新下载原始记录：
 

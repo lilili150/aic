@@ -1,0 +1,7 @@
+{
+  "best_epoch": 30,
+  "best_miou": 0.762584655710188,
+  "final_miou": 0.762584655710188,
+  "elapsed_seconds": 6066.674450159073,
+  "elapsed_minutes": 101.11124083598455
+}
